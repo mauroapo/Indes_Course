@@ -3,26 +3,30 @@
 {% block title %}Indes Portal — {{ turma.name }}{% endblock %}
 
 {% block content %}
-<div style="display:flex; align-items:center; gap:var(--spacing-sm); margin-bottom:var(--spacing-md);">
-    <a href="{% url 'turma_list' %}" style="color: var(--text-gray); text-decoration:none;">← Classes</a>
+<div class="page-back">
+    <a href="{% url 'turma_list' %}">← Classes</a>
 </div>
+
 <h1 class="page-title">{{ turma.name }}</h1>
-<p style="color: var(--text-gray); margin-bottom: var(--spacing-lg);">{% if turma.professor %}Professor: {% with name=turma.professor.get_full_name %}{% if name %}{{ name }}{% else %}{{ turma.professor.email }}{% endif %}{% endwith %}{% endif %}</p>
+<p class="card-description">
+    {% if turma.professor %}Professor: {% with name=turma.professor.get_full_name %}{% if name %}{{ name }}{% else %}{{ turma.professor.email }}{% endif %}{% endwith %}{% endif %}
+    {% if presence_role %}<span class="pill pill-role">{{ presence_role|capfirst }}</span>{% endif %}
+</p>
 
 <!-- STUDENT VIEW: Open Sessions -->
 {% if is_student and open_sessions %}
-<div class="card" style="border-left: 4px solid #22c55e; margin-bottom: var(--spacing-lg);">
+<div class="card presence-open-card mb-3">
     <div class="card-body">
-        <h2 style="font-size:1rem; margin-bottom: var(--spacing-sm);">📋 Chamada Aberta</h2>
+        <h2 class="presence-column-title">📋 Chamada Aberta</h2>
         {% for item in open_sessions %}
-        <div style="display:flex; justify-content:space-between; align-items:center; padding: var(--spacing-sm) 0; border-bottom:1px solid rgba(255,255,255,0.07);">
+        <div class="presence-list-item">
             <span>{{ item.session.date|date:"d/m/Y" }}</span>
             {% if item.already_checked %}
-            <span style="background:#22c55e22; color:#22c55e; border-radius:999px; padding:4px 14px; font-size:0.85rem;">✅ Presença Registrada</span>
+            <span class="pill pill-present">✅ Presença Registrada</span>
             {% else %}
-            <form method="post" action="{% url 'presence_checkin' item.session.id %}">
+            <form method="post" action="{% url 'presence_checkin' item.session.id %}" style="margin:0;">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-primary" style="padding: 6px 18px; font-size:0.9rem;">Registrar Presença</button>
+                <button type="submit" class="btn btn-primary btn-sm">Registrar Presença</button>
             </form>
             {% endif %}
         </div>
@@ -33,33 +37,33 @@
 
 <!-- PROFESSOR VIEW: Actions -->
 {% if is_professor %}
-<div style="display:flex; gap: var(--spacing-sm); margin-bottom: var(--spacing-lg);">
+<div class="presence-actions">
     <a href="{% url 'presence_session_create' turma.id %}" class="btn btn-primary">+ Nova Lista de Presença</a>
 </div>
 
 <!-- Student Roster -->
-<div class="card" style="margin-bottom: var(--spacing-lg);">
+<div class="card mb-3">
     <div class="card-body">
-        <h2 style="font-size:1rem; margin-bottom: var(--spacing-sm);">👨‍🎓 Alunos ({{ students|length }})</h2>
+        <h2 class="presence-column-title">👨‍🎓 Alunos ({{ students|length }})</h2>
         {% if students %}
-        <table style="width:100%; border-collapse:collapse;">
+        <table class="data-table">
             <thead>
-                <tr style="text-align:left; color: var(--text-gray); font-size:0.85rem; border-bottom:1px solid rgba(255,255,255,0.1);">
-                    <th style="padding: 8px 0;">Nome</th>
-                    <th style="padding: 8px 0;">Email</th>
+                <tr>
+                    <th>Nome</th>
+                    <th>Email</th>
                 </tr>
             </thead>
             <tbody>
                 {% for student in students %}
-                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                    <td style="padding: 10px 0;">{{ student.get_full_name|default:"—" }}</td>
-                    <td style="padding: 10px 0; color: var(--text-gray);">{{ student.email }}</td>
+                <tr>
+                    <td>{{ student.get_full_name|default:"—" }}</td>
+                    <td class="data-table-muted">{{ student.email }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
         {% else %}
-        <p style="color: var(--text-gray);">Nenhum aluno cadastrado nesta turma ainda.</p>
+        <p class="presence-empty">Nenhum aluno cadastrado nesta turma ainda.</p>
         {% endif %}
     </div>
 </div>
@@ -69,33 +73,33 @@
 {% if sessions_data %}
 <div class="card">
     <div class="card-body">
-        <h2 style="font-size:1rem; margin-bottom: var(--spacing-sm);">📅 Histórico de Presenças</h2>
-        <table style="width:100%; border-collapse:collapse;">
+        <h2 class="presence-column-title">📅 Histórico de Presenças</h2>
+        <table class="data-table">
             <thead>
-                <tr style="text-align:left; color: var(--text-gray); font-size:0.85rem; border-bottom:1px solid rgba(255,255,255,0.1);">
-                    <th style="padding: 8px 0;">Data</th>
-                    {% if is_professor %}<th style="padding: 8px 0;">Presenças</th>{% endif %}
-                    <th style="padding: 8px 0;">Status</th>
-                    {% if is_professor %}<th style="padding: 8px 0;">Ações</th>{% endif %}
+                <tr>
+                    <th>Data</th>
+                    {% if is_professor %}<th>Presenças</th>{% endif %}
+                    <th>Status</th>
+                    <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
                 {% for item in sessions_data %}
-                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                    <td style="padding: 10px 0;">{{ item.session.date|date:"d/m/Y" }}</td>
-                    {% if is_professor %}<td style="padding: 10px 0;">{{ item.count }} aluno{{ item.count|pluralize:",s" }}</td>{% endif %}
-                    <td style="padding: 10px 0;">
+                <tr>
+                    <td>{{ item.session.date|date:"d/m/Y" }}</td>
+                    {% if is_professor %}<td>{{ item.count }} aluno{{ item.count|pluralize:",s" }}</td>{% endif %}
+                    <td>
                         {% if item.session.is_open %}
-                        <span style="background:#22c55e22; color:#22c55e; border-radius:999px; padding:3px 10px; font-size:0.8rem;">Aberta</span>
+                        <span class="pill pill-open">Aberta</span>
                         {% else %}
-                        <span style="background:rgba(255,255,255,0.05); color: var(--text-gray); border-radius:999px; padding:3px 10px; font-size:0.8rem;">Fechada</span>
+                        <span class="pill pill-closed">Fechada</span>
                         {% endif %}
                     </td>
-                    {% if is_professor %}
-                    <td style="padding: 10px 0;">
-                        <a href="{% url 'presence_session_detail' item.session.id %}" style="color: var(--primary); font-size:0.85rem;">Ver detalhes →</a>
+                    <td>
+                        <a href="{% url 'presence_session_detail' item.session.id %}" class="text-link">
+                            {% if is_professor %}Ver detalhes →{% else %}Ver minha presença →{% endif %}
+                        </a>
                     </td>
-                    {% endif %}
                 </tr>
                 {% endfor %}
             </tbody>
@@ -104,8 +108,9 @@
 </div>
 {% else %}
 <div class="card">
-    <div class="card-body text-center">
-        <p style="color: var(--text-gray);">Nenhuma lista de presença criada ainda.</p>
+    <div class="card-body empty-state">
+        <div class="empty-state-icon">📅</div>
+        <p>Nenhuma lista de presença criada ainda.</p>
     </div>
 </div>
 {% endif %}

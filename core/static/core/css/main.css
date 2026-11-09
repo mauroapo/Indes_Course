@@ -932,6 +932,240 @@ table { border-collapse: collapse; }
     font-weight: 700;
 }
 
+/* Status pills (open/closed sessions, presence, roles) */
+.pill {
+    display: inline-block;
+    padding: 0.2rem 0.7rem;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-cta);
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+.pill-open,
+.pill-present {
+    background: var(--indes-success-bg);
+    color: var(--indes-success);
+}
+
+.pill-closed {
+    background: var(--indes-tint);
+    color: var(--indes-gray-600);
+    border: 1px solid var(--indes-border);
+}
+
+.pill-absent {
+    background: var(--indes-danger-bg);
+    color: var(--indes-danger);
+}
+
+.pill-role {
+    background: var(--indes-tint);
+    color: var(--indes-purple);
+}
+
+/* Data tables on white cards */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table thead th {
+    text-align: left;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--indes-border);
+    color: var(--indes-gray-600);
+    font-family: var(--font-heading);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.data-table tbody td {
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--indes-border);
+    vertical-align: middle;
+    font-size: 0.92rem;
+}
+
+.data-table tbody tr:last-child td { border-bottom: 0; }
+
+.data-table .data-table-muted { color: var(--indes-gray-600); }
+
+/* Small text link used for "back" / "ver detalhes" */
+.text-link {
+    color: var(--indes-purple);
+    font-weight: 700;
+}
+
+.text-link:hover { color: var(--indes-purple-light); }
+
+/* Presence (turma / chamada) panels */
+.page-back {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.page-back a {
+    color: var(--indes-gray-600);
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.page-back a:hover { color: var(--indes-purple); }
+
+.presence-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.presence-header p { color: var(--indes-gray-600); }
+
+.presence-stats {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    flex-wrap: wrap;
+}
+
+.presence-stat { flex: 1; min-width: 140px; }
+
+.presence-stat .card-body { text-align: center; }
+
+.presence-stat-value {
+    font-family: var(--font-heading);
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--indes-gray-800);
+}
+
+.presence-stat-value.is-present { color: var(--indes-success); }
+.presence-stat-value.is-absent { color: var(--indes-danger); }
+
+.presence-stat-label {
+    color: var(--indes-gray-600);
+    font-size: 0.85rem;
+}
+
+.presence-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+}
+
+.presence-open-card {
+    border-left: 4px solid var(--indes-success);
+}
+
+.presence-column-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-sm);
+}
+
+.presence-column-title.is-present { color: var(--indes-success); }
+.presence-column-title.is-absent { color: var(--indes-danger); }
+
+.presence-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.presence-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--indes-border);
+    font-size: 0.9rem;
+}
+
+.presence-list-item:last-child { border-bottom: 0; }
+
+.presence-meta {
+    color: var(--indes-gray-600);
+    font-size: 0.78rem;
+}
+
+.presence-empty {
+    color: var(--indes-gray-600);
+    font-size: 0.9rem;
+    margin-bottom: 0;
+}
+
+.presence-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+}
+
+/* Soft button variants that stay legible on white cards */
+.btn-ghost {
+    background: transparent;
+    border-color: var(--indes-border);
+    color: var(--indes-gray-800);
+}
+
+.btn-ghost:hover,
+.btn-ghost:focus-visible {
+    background: var(--indes-tint);
+    border-color: var(--indes-border);
+    color: var(--indes-purple);
+}
+
+.btn-success-soft {
+    background: var(--indes-success-bg);
+    border-color: transparent;
+    color: var(--indes-success);
+}
+
+.btn-success-soft:hover,
+.btn-success-soft:focus-visible {
+    background: var(--indes-success);
+    border-color: var(--indes-success);
+    color: #FFFFFF;
+}
+
+.btn-danger-soft {
+    background: var(--indes-danger-bg);
+    border-color: transparent;
+    color: var(--indes-danger);
+}
+
+.btn-danger-soft:hover,
+.btn-danger-soft:focus-visible {
+    background: var(--indes-danger);
+    border-color: var(--indes-danger);
+    color: #FFFFFF;
+}
+
+/* Empty states */
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-lg) var(--spacing-md);
+    color: var(--indes-gray-600);
+}
+
+.empty-state-icon {
+    font-size: 1.9rem;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p { margin-bottom: 0; }
+
 .spinner,
 .spinner-large {
     display: inline-block;
@@ -995,6 +1229,8 @@ table { border-collapse: collapse; }
     .auth-card { padding: 2rem 1.4rem 1.75rem; border-radius: 22px; }
 
     .app-footer { flex-direction: column; }
+
+    .presence-columns { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {

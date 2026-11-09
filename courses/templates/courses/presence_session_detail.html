@@ -3,78 +3,81 @@
 {% block title %}Indes Portal — Chamada {{ session.date|date:"d/m/Y" }}{% endblock %}
 
 {% block content %}
-<div style="display:flex; align-items:center; gap:var(--spacing-sm); margin-bottom:var(--spacing-md);">
-    <a href="{% url 'turma_detail' turma.id %}" style="color: var(--text-gray); text-decoration:none;">← {{ turma.name }}</a>
+<div class="page-back">
+    <a href="{% url 'turma_detail' turma.id %}">← {{ turma.name }}</a>
 </div>
 
-<div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap: var(--spacing-md); margin-bottom: var(--spacing-lg);">
+<div class="presence-header">
     <div>
         <h1 class="page-title" style="margin-bottom:4px;">📋 Chamada — {{ session.date|date:"d/m/Y" }}</h1>
-        <p style="color: var(--text-gray);">{{ turma.name }}{% if turma.course %} · {{ turma.course.name }}{% endif %}</p>
+        <p>{{ turma.name }}{% if turma.professor %} · Professor: {{ turma.professor.get_full_name|default:turma.professor.email }}{% endif %}</p>
     </div>
 
-    <!-- Open / Close Toggle -->
+    {% if is_professor %}
+    <!-- Open / Close Toggle (Professor only) -->
     <form method="post" action="{% url 'presence_session_toggle' session.id %}">
         {% csrf_token %}
-        <button type="submit" class="btn" style="
-            background: {% if session.is_open %}#22c55e22{% else %}rgba(255,255,255,0.08){% endif %};
-            color: {% if session.is_open %}#22c55e{% else %}var(--text-gray){% endif %};
-            border: 1px solid {% if session.is_open %}#22c55e55{% else %}rgba(255,255,255,0.12){% endif %};
-        ">
-            {% if session.is_open %}✅ Chamada Aberta — Fechar{% else %}🔒 Chamada Fechada — Abrir{% endif %}
-        </button>
+        {% if session.is_open %}
+        <button type="submit" class="btn btn-success-soft">✅ Chamada Aberta — Fechar</button>
+        {% else %}
+        <button type="submit" class="btn btn-ghost">🔒 Chamada Fechada — Abrir</button>
+        {% endif %}
     </form>
+    {% else %}
+    <span class="pill {% if session.is_open %}pill-open{% else %}pill-closed{% endif %}">
+        {% if session.is_open %}Chamada aberta{% else %}Chamada fechada{% endif %}
+    </span>
+    {% endif %}
 </div>
 
-<!-- Stats summary -->
-<div style="display:flex; gap: var(--spacing-md); margin-bottom: var(--spacing-lg); flex-wrap: wrap;">
-    <div class="card" style="flex:1; min-width:140px;">
-        <div class="card-body" style="text-align:center;">
-            <div style="font-size:2rem; font-weight:700; color:#22c55e;">{{ present_students|length }}</div>
-            <div style="color: var(--text-gray); font-size:0.85rem;">Presentes</div>
+{% if is_professor %}
+<!-- Stats summary (Professor only) -->
+<div class="presence-stats">
+    <div class="card presence-stat">
+        <div class="card-body">
+            <div class="presence-stat-value is-present">{{ present_students|length }}</div>
+            <div class="presence-stat-label">Presentes</div>
         </div>
     </div>
-    <div class="card" style="flex:1; min-width:140px;">
-        <div class="card-body" style="text-align:center;">
-            <div style="font-size:2rem; font-weight:700; color:#f87171;">{{ absent_students|length }}</div>
-            <div style="color: var(--text-gray); font-size:0.85rem;">Ausentes</div>
+    <div class="card presence-stat">
+        <div class="card-body">
+            <div class="presence-stat-value is-absent">{{ absent_students|length }}</div>
+            <div class="presence-stat-label">Ausentes</div>
         </div>
     </div>
-    <div class="card" style="flex:1; min-width:140px;">
-        <div class="card-body" style="text-align:center;">
-            {% with total=present_students|length|add:absent_students|length %}
-            <div style="font-size:2rem; font-weight:700;">{{ total }}</div>
-            {% endwith %}
-            <div style="color: var(--text-gray); font-size:0.85rem;">Total</div>
+    <div class="card presence-stat">
+        <div class="card-body">
+            <div class="presence-stat-value">{{ student_count }}</div>
+            <div class="presence-stat-label">Total</div>
         </div>
     </div>
 </div>
 
 <!-- Present & Absent Students Side-by-Side -->
-<div style="display:grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md);">
+<div class="presence-columns">
     <!-- Present -->
     <div class="card">
         <div class="card-body">
-            <h2 style="font-size:0.95rem; font-weight:600; color:#22c55e; margin-bottom: var(--spacing-sm);">✅ Presentes</h2>
+            <h2 class="presence-column-title is-present">✅ Presentes</h2>
             {% if present_students %}
-            <ul style="list-style:none; padding:0; margin:0;">
+            <ul class="presence-list">
                 {% for student in present_students %}
-                <li style="display:flex; justify-content:space-between; align-items:center; padding: 8px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.9rem;">
+                <li class="presence-list-item">
                     <div>
                         {{ student.get_full_name|default:student.email }}
-                        <div style="color: var(--text-gray); font-size:0.78rem;">{{ student.email }}</div>
+                        <div class="presence-meta">{{ student.email }}</div>
                     </div>
                     <form method="post" action="{% url 'presence_remove' session.id student.id %}" style="margin:0;">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-sm" style="background:rgba(248,113,113,0.1); color:#f87171; border:1px solid rgba(248,113,113,0.2); padding: 4px 8px; font-size: 0.8rem; cursor:pointer;" onclick="return confirm('Tem certeza que deseja remover a presença deste aluno?');" title="Remover presença">
-                            Remover
-                        </button>
+                        <button type="submit" class="btn btn-sm btn-danger-soft"
+                            onclick="return confirm('Tem certeza que deseja remover a presença deste aluno?');"
+                            title="Remover presença">Remover</button>
                     </form>
                 </li>
                 {% endfor %}
             </ul>
             {% else %}
-            <p style="color: var(--text-gray); font-size:0.9rem;">Nenhum aluno registrou presença ainda.</p>
+            <p class="presence-empty">Nenhum aluno registrou presença ainda.</p>
             {% endif %}
         </div>
     </div>
@@ -82,20 +85,44 @@
     <!-- Absent -->
     <div class="card">
         <div class="card-body">
-            <h2 style="font-size:0.95rem; font-weight:600; color:#f87171; margin-bottom: var(--spacing-sm);">❌ Ausentes</h2>
+            <h2 class="presence-column-title is-absent">❌ Ausentes</h2>
             {% if absent_students %}
-            <ul style="list-style:none; padding:0; margin:0;">
+            <ul class="presence-list">
                 {% for student in absent_students %}
-                <li style="padding: 8px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.9rem;">
-                    {{ student.get_full_name|default:student.email }}
-                    <div style="color: var(--text-gray); font-size:0.78rem;">{{ student.email }}</div>
+                <li class="presence-list-item">
+                    <div>
+                        {{ student.get_full_name|default:student.email }}
+                        <div class="presence-meta">{{ student.email }}</div>
+                    </div>
                 </li>
                 {% endfor %}
             </ul>
             {% else %}
-            <p style="color: var(--text-gray); font-size:0.9rem;">Todos os alunos registraram presença! 🎉</p>
+            <p class="presence-empty">Todos os alunos registraram presença! 🎉</p>
             {% endif %}
         </div>
     </div>
 </div>
+
+{% else %}
+<!-- Student view: only my own attendance, no roster -->
+<div class="card">
+    <div class="card-body">
+        <h2 class="presence-column-title">Minha presença</h2>
+        {% if my_record %}
+        <p class="mb-2"><span class="pill pill-present">✅ Presença registrada</span></p>
+        <p class="presence-empty">Registrada em {{ my_record.registered_at|date:"d/m/Y H:i" }}.</p>
+        {% elif can_checkin %}
+        <p class="mb-2">A chamada está aberta. Confirme sua presença nesta aula.</p>
+        <form method="post" action="{% url 'presence_checkin' session.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary">Registrar Presença</button>
+        </form>
+        {% else %}
+        <p class="mb-2"><span class="pill pill-absent">Ausente</span></p>
+        <p class="presence-empty">A chamada não está aberta. Peça ao professor para abri-la.</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
 {% endblock %}

@@ -6,8 +6,8 @@
 <h1 class="page-title">Classes</h1>
 
 {% if teaching %}
-<div class="section-header" style="margin-bottom: var(--spacing-sm);">
-    <h2 style="font-size:1.1rem; color: var(--text-gray); font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Classes que leciono</h2>
+<div class="section-header mb-1">
+    <h2>Classes que leciono</h2>
 </div>
 <div class="grid">
     {% for turma in teaching %}
@@ -16,7 +16,7 @@
             <div class="card-body">
                 <h3 class="card-title">{{ turma.name }}</h3>
                 <p class="card-description">{{ turma.students.count }} aluno{{ turma.students.count|pluralize:",s" }}</p>
-                <span style="font-size:0.8rem; color: var(--text-gray);">👨‍🏫 Professor</span>
+                <span class="pill pill-role">👨‍🏫 Professor</span>
             </div>
         </div>
     </a>
@@ -25,8 +25,8 @@
 {% endif %}
 
 {% if enrolled %}
-<div class="section-header" style="margin: var(--spacing-lg) 0 var(--spacing-sm);">
-    <h2 style="font-size:1.1rem; color: var(--text-gray); font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Classes que participo</h2>
+<div class="section-header mt-2 mb-1">
+    <h2>Classes que participo</h2>
 </div>
 <div class="grid">
     {% for turma in enrolled %}
@@ -37,7 +37,7 @@
                 <p class="card-description">
                     {% if turma.professor %}{{ turma.professor.get_full_name|default:turma.professor.email }}{% else %}Sem professor definido{% endif %}
                 </p>
-                <span style="font-size:0.8rem; color: var(--text-gray);">👨‍🎓 Aluno</span>
+                <span class="pill pill-role">👨‍🎓 Aluno</span>
             </div>
         </div>
     </a>
@@ -47,8 +47,9 @@
 
 {% if not teaching and not enrolled %}
 <div class="card">
-    <div class="card-body text-center">
-        <p style="color: var(--text-gray);">Você ainda não está vinculado a nenhuma classe.</p>
+    <div class="card-body empty-state">
+        <div class="empty-state-icon">🏫</div>
+        <p>Você ainda não está vinculado a nenhuma classe.</p>
     </div>
 </div>
 {% endif %}

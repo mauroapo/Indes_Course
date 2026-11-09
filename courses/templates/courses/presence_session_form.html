@@ -3,18 +3,20 @@
 {% block title %}Indes Portal — Nova chamada{% endblock %}
 
 {% block content %}
-<div style="display:flex; align-items:center; gap:var(--spacing-sm); margin-bottom:var(--spacing-md);">
-    <a href="{% url 'turma_detail' turma.id %}" style="color: var(--text-gray); text-decoration:none;">← {{ turma.name }}</a>
+<div class="page-back">
+    <a href="{% url 'turma_detail' turma.id %}">← {{ turma.name }}</a>
 </div>
+
 <h1 class="page-title">Nova Lista de Presença</h1>
-<p style="color: var(--text-gray); margin-bottom: var(--spacing-lg);">{{ turma.name }}{% if turma.course %} · {{ turma.course.name }}{% endif %}</p>
+<p class="card-description mb-3">{{ turma.name }}{% if turma.course %} · {{ turma.course.name }}{% endif %}</p>
 
 <div class="card" style="max-width: 480px;">
     <div class="card-body">
         <form method="post">
             {% csrf_token %}
-            <div style="margin-bottom: var(--spacing-md);">
-                <label for="date" style="display:block; margin-bottom: var(--spacing-xs); font-weight:600;">Data da Aula</label>
+
+            <div class="form-group">
+                <label for="date" class="form-label">Data da Aula</label>
                 <input
                     type="date"
                     id="date"
@@ -22,12 +24,12 @@
                     value="{{ today }}"
                     class="form-input"
                     required
-                    style="width:100%;"
                 >
             </div>
-            <div style="display:flex; gap: var(--spacing-sm);">
+
+            <div class="presence-actions" style="margin-bottom: 0;">
                 <button type="submit" class="btn btn-primary">Criar Lista</button>
-                <a href="{% url 'turma_detail' turma.id %}" class="btn" style="background: rgba(255,255,255,0.08);">Cancelar</a>
+                <a href="{% url 'turma_detail' turma.id %}" class="btn btn-ghost">Cancelar</a>
             </div>
         </form>
     </div>
