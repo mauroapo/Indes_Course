@@ -3,29 +3,25 @@
 {% block title %}Indes Portal — Criar conta{% endblock %}
 
 {% block auth_content %}
-<div class="auth-container">
-    <div class="auth-card">
-        <h1 class="auth-title">Criar Conta</h1>
+<h1 class="auth-title">Criar Conta</h1>
 
-        <form method="post">
-            {% csrf_token %}
+<form method="post">
+    {% csrf_token %}
 
-            {% for field in form %}
-            <div class="form-group">
-                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                {{ field }}
-                {% if field.errors %}
-                <span style="color: #EF4444; font-size: 0.875rem;">{{ field.errors }}</span>
-                {% endif %}
-            </div>
-            {% endfor %}
-
-            <button type="submit" class="btn btn-primary" style="width: 100%;">Criar Conta</button>
-        </form>
-
-        <div class="auth-link">
-            Já tem uma conta? <a href="{% url 'login' %}">Entrar</a>
-        </div>
+    {% for field in form %}
+    <div class="form-group">
+        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+        <span class="error-message">{{ field.errors }}</span>
+        {% endif %}
     </div>
+    {% endfor %}
+
+    <button type="submit" class="btn btn-primary btn-block">Criar Conta</button>
+</form>
+
+<div class="auth-link">
+    Já tem uma conta? <a href="{% url 'login' %}">Entrar</a>
 </div>
 {% endblock %}

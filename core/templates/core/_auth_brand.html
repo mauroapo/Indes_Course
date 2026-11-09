@@ -1,0 +1,10 @@
+{% load static %}
+{# Brand block shared by every auth screen (login, signup, password reset). #}
+{# Rendered once from core/base.html, inside the white auth card.            #}
+<div class="auth-brand">
+    <img class="auth-brand-logo"
+         src="{% static 'core/img/indes-logo.png' %}"
+         alt="INDES"
+         width="479" height="130">
+    <span class="auth-brand-wordmark">Indes Portal</span>
+</div>

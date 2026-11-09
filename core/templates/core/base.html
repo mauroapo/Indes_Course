@@ -102,7 +102,14 @@
     </div>
     {% endif %}
 
-    {% block auth_content %}{% endblock %}
+    <!-- Shared auth shell: one insertion point, every auth page gets the
+         INDES logo + wordmark above its form (core/_auth_brand.html). -->
+    <div class="auth-container">
+        <div class="auth-card">
+            {% include 'core/_auth_brand.html' %}
+            {% block auth_content %}{% endblock %}
+        </div>
+    </div>
     {% endif %}
 
     <script src="{% static 'core/js/main.js' %}"></script>
