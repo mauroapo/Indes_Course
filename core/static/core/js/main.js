@@ -4,8 +4,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const sidebar = document.querySelector('.sidebar');
 
     if (hamburger && sidebar) {
+        function setExpanded(expanded) {
+            hamburger.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        }
+
         hamburger.addEventListener('click', function () {
             sidebar.classList.toggle('active');
+            setExpanded(sidebar.classList.contains('active'));
         });
 
         // Close sidebar when clicking outside on mobile
@@ -13,8 +18,19 @@ document.addEventListener('DOMContentLoaded', function () {
             if (window.innerWidth <= 768) {
                 if (!sidebar.contains(event.target) && !hamburger.contains(event.target)) {
                     sidebar.classList.remove('active');
+                    setExpanded(false);
                 }
             }
+        });
+
+        // Close sidebar after following a nav link (mobile)
+        sidebar.querySelectorAll('.sidebar-nav a').forEach(function (link) {
+            link.addEventListener('click', function () {
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.remove('active');
+                    setExpanded(false);
+                }
+            });
         });
     }
 
