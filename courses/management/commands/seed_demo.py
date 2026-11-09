@@ -26,10 +26,11 @@ Nothing is deleted and existing rows are never overwritten.
 from datetime import date
 from decimal import Decimal
 
+from django.apps import apps
 from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
-from django.db import transaction
+from django.db import connection, transaction
 
 from accounts.models import CustomUser
 from cart.models import Cart, CartItem
@@ -478,6 +479,16 @@ class Command(BaseCommand):
         """
         write = self.stdout.write
         write(self.style.WARNING('\n--reset: apagando todos os dados existentes'))
+
+        # Tabelas que existem no banco mas não têm model (ex.: restos de apps
+        # removidos). Precisam sair antes, senão violam FKs ao apagar Course.
+        legacy = self._legacy_tables()
+        if legacy:
+            write('  tabelas legadas (sem model): ' + ', '.join(legacy))
+            quoted = ', '.join(f'"{table}"' for table in legacy)
+            with connection.cursor() as cursor:
+                cursor.execute(f'TRUNCATE TABLE {quoted} CASCADE')
+
         models_in_order = [
             StudentAnswer, QuizAttempt, StudentProgress, PresenceRecord,
             PresenceSession, OrgSeatAssignment, OrgPackageItem, OrgPackage,
@@ -488,6 +499,19 @@ class Command(BaseCommand):
         for model in models_in_order:
             deleted, _ = model.objects.all().delete()
             write(f'  {model._meta.label:<28} removidos: {deleted}')
+
+    @staticmethod
+    def _legacy_tables():
+        """Tabelas sem model correspondente (exclui as internas do Django)."""
+        known = {model._meta.db_table for model in apps.get_models()}
+        for model in apps.get_models():
+            for field in model._meta.local_many_to_many:
+                known.add(field.remote_field.through._meta.db_table)
+        known.add('django_migrations')
+
+        with connection.cursor() as cursor:
+            tables = set(connection.introspection.table_names(cursor))
+        return sorted(tables - known)
 
     # ------------------------------------------------------------------
     def _user(self, email, password, first_name, last_name, stats,
