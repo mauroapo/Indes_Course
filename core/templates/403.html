@@ -1,0 +1,15 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Acesso restrito — Indes Portal{% endblock %}
+
+{% block content %}
+<div class="card error-card">
+    <div class="card-body">
+        {% include 'core/_403_body.html' %}
+    </div>
+</div>
+{% endblock %}
+
+{% block auth_content %}
+{% include 'core/_403_body.html' %}
+{% endblock %}

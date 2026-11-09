@@ -38,18 +38,22 @@
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 10.5 12 3.2l9 7.3"/><path d="M5.5 9.6V21h13V9.6"/></svg> Início
                         </a>
                     </li>
+                    {% if perms.courses.access_courses %}
                     <li>
                         <a href="{% url 'my_courses' %}"
                             class="{% if url_name == 'my_courses' or url_name == 'course_detail' or url_name == 'course_redirect' or url_name == 'lesson_view' or url_name == 'quiz_view' or url_name == 'quiz_take' or url_name == 'quiz_result' %}active{% endif %}">
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 5.6A1.6 1.6 0 0 1 5.6 4H12v16H5.6A1.6 1.6 0 0 1 4 18.4z"/><path d="M12 4h6.4A1.6 1.6 0 0 1 20 5.6v12.8a1.6 1.6 0 0 1-1.6 1.6H12"/></svg> Minhas aulas
                         </a>
                     </li>
+                    {% endif %}
+                    {% if perms.courses.access_presence %}
                     <li>
                         <a href="{% url 'turma_list' %}"
                             class="{% if url_name == 'turma_list' or url_name == 'turma_detail' or url_name == 'presence_session_detail' or url_name == 'presence_session_create' %}active{% endif %}">
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3.2"/><path d="M3.6 20c0-3.1 2.4-5.1 5.4-5.1s5.4 2 5.4 5.1"/><path d="M16.2 5.3a3 3 0 0 1 0 5.5"/><path d="M17.6 14.7c1.9.6 3.1 2.3 3.1 4.3"/></svg> Classes
                         </a>
                     </li>
+                    {% endif %}
                     <!-- Loja desativada nesta versão: rotas seguem vivas, mas fora do menu. -->
                     <li>
                         <a href="{% url 'account' %}" class="{% if url_name == 'account' or url_name == 'change_email_request' or url_name == 'change_email_confirm' %}active{% endif %}">

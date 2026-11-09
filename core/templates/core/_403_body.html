@@ -1,0 +1,11 @@
+<div class="error-body">
+    <p class="error-code">403</p>
+    <h1 class="error-title">Acesso restrito</h1>
+    <p>Sua conta não tem permissão para abrir esta página. Se você acredita que
+        isso é um engano, fale com a coordenação do INDES.</p>
+    {% if user.is_authenticated %}
+    <a href="{% url 'home' %}" class="btn btn-primary">Voltar ao início</a>
+    {% else %}
+    <a href="{% url 'login' %}" class="btn btn-primary">Entrar</a>
+    {% endif %}
+</div>
