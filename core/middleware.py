@@ -9,6 +9,7 @@ class AuthRequiredMiddleware:
         '/login/',
         '/signup/',
         '/forgot-password/',  # Password reset flow
+        '/favicon.ico',
         '/admin/',
         '/static/',
         '/media/',
