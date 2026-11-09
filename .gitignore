@@ -35,6 +35,6 @@ Thumbs.db
 # Docker
 *.pid
 
-ong_platform/
-
-ong_platform
+# Local dev artifacts (SQLite db is already ignored above)
+dev.sqlite3
+run-dev.local.ps1
