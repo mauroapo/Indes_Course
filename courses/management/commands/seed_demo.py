@@ -32,10 +32,15 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from accounts.models import CustomUser
+from cart.models import Cart, CartItem
 from courses.models import (
-    Course, Enrollment, Lesson, Module, PresenceSession, Turma,
+    Course, Enrollment, Lesson, Module, PresenceRecord, PresenceSession,
+    Question, QuestionOption, Quiz, QuizAttempt, QuizQuestion, StudentAnswer,
+    StudentProgress, Turma,
 )
-from orgs.models import Organization, OrgMember
+from orgs.models import (
+    Organization, OrgMember, OrgPackage, OrgPackageItem, OrgSeatAssignment,
+)
 
 ADMIN_EMAIL = 'admin@indes.dev'
 ADMIN_PASSWORD = 'indes123'
@@ -296,6 +301,14 @@ class Command(BaseCommand):
                 'todas as contas.'
             ),
         )
+        parser.add_argument(
+            '--reset',
+            action='store_true',
+            help=(
+                'APAGA todos os dados de domínio e todas as contas antes de '
+                'semear, deixando o banco idêntico ao seed. Exige --force.'
+            ),
+        )
 
     @transaction.atomic
     def handle(self, *args, **options):
@@ -309,6 +322,15 @@ class Command(BaseCommand):
             )
 
         password = options['password']
+
+        if options['reset']:
+            if not options['force']:
+                raise CommandError(
+                    '--reset apaga TODOS os dados de domínio e TODAS as contas. '
+                    'Confirme com --force (e tenha um backup do banco).'
+                )
+            self._wipe()
+
         stats = {
             'users': 0, 'orgs': 0, 'courses': 0, 'modules': 0,
             'lessons': 0, 'turmas': 0, 'enrollments': 0, 'sessions': 0,
@@ -438,16 +460,34 @@ class Command(BaseCommand):
         # Grupos de módulo (Professor / Aluno) + permissões de acesso
         call_command('seed_roles')
 
-        # Uniformiza a senha de TODAS as contas locais, para o roster de USERS.md
-        # nunca divergir do banco (build de desenvolvimento apenas).
-        reset = 0
-        for user in CustomUser.objects.all():
+        # Uniformiza a senha das contas criadas por este comando (roster de USERS.md).
+        # Contas que o seed não gerencia nunca têm a senha trocada.
+        seeded = [admin, *teachers, *students]
+        for user in seeded:
             user.set_password(password)
             user.save(update_fields=['password'])
-            reset += 1
-        stats['passwords'] = reset
+        stats['passwords'] = len(seeded)
 
         self._report(stats, password, admin, teachers, students)
+
+    # ------------------------------------------------------------------
+    def _wipe(self):
+        """Apaga dados de domínio e contas, na ordem que evita órfãos.
+
+        Só é chamado por ``--reset``, que por sua vez exige ``--force``.
+        """
+        write = self.stdout.write
+        write(self.style.WARNING('\n--reset: apagando todos os dados existentes'))
+        models_in_order = [
+            StudentAnswer, QuizAttempt, StudentProgress, PresenceRecord,
+            PresenceSession, OrgSeatAssignment, OrgPackageItem, OrgPackage,
+            OrgMember, Organization, Enrollment, Turma, CartItem, Cart,
+            QuizQuestion, QuestionOption, Question, Quiz,
+            Lesson, Module, Course, CustomUser,
+        ]
+        for model in models_in_order:
+            deleted, _ = model.objects.all().delete()
+            write(f'  {model._meta.label:<28} removidos: {deleted}')
 
     # ------------------------------------------------------------------
     def _user(self, email, password, first_name, last_name, stats,
