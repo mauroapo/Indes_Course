@@ -485,9 +485,19 @@ class Command(BaseCommand):
         legacy = self._legacy_tables()
         if legacy:
             write('  tabelas legadas (sem model): ' + ', '.join(legacy))
-            quoted = ', '.join(f'"{table}"' for table in legacy)
             with connection.cursor() as cursor:
-                cursor.execute(f'TRUNCATE TABLE {quoted} CASCADE')
+                if connection.vendor == 'postgresql':
+                    quoted = ', '.join(f'"{table}"' for table in legacy)
+                    cursor.execute(f'TRUNCATE TABLE {quoted} CASCADE')
+                else:
+                    # SQLite (dev) não tem TRUNCATE: apaga linha a linha, com as
+                    # FKs desligadas para não depender da ordem das tabelas.
+                    cursor.execute('PRAGMA foreign_keys = OFF')
+                    try:
+                        for table in legacy:
+                            cursor.execute(f'DELETE FROM "{table}"')
+                    finally:
+                        cursor.execute('PRAGMA foreign_keys = ON')
 
         models_in_order = [
             StudentAnswer, QuizAttempt, StudentProgress, PresenceRecord,
