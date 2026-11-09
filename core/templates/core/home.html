@@ -1,13 +1,13 @@
 {% extends 'core/base.html' %}
 
-{% block title %}Home - Plataforma de Cursos{% endblock %}
+{% block title %}Indes Portal — Início{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Bem-vindo, {{ user.first_name|default:user.email }}!</h1>
+<h1 class="page-title">Olá, {{ user.first_name|default:user.email }}!</h1>
 
-<!-- Meus Cursos Carousel -->
+<!-- Minhas aulas Carousel -->
 <div class="carousel-container">
-    <h2 class="carousel-title">Meus Cursos</h2>
+    <h2 class="carousel-title">Minhas aulas</h2>
     {% if my_courses %}
     <div class="carousel">
         {% for course in my_courses %}
@@ -24,14 +24,16 @@
         {% endfor %}
     </div>
     {% else %}
-    <p style="color: var(--text-gray);">Você ainda não possui cursos. 
-        <!-- <a href="{% url 'acquire_courses' %}"
-            style="color: var(--primary-purple); font-weight: 600;">Adquira seu primeiro curso!</a> -->
-        </p>
+    <div class="card">
+        <div class="card-body">
+            <p style="color: var(--text-gray);">Você ainda não está matriculado em nenhuma aula.
+                Consulte a secretaria do INDES para liberar seu acesso.</p>
+        </div>
+    </div>
     {% endif %}
 </div>
 
-<!-- Cursos Mais Recentes Carousel -->
+<!-- Cursos Mais Recentes Carousel (loja desativada nesta versão) -->
 <!-- <div class="carousel-container">
     <h2 class="carousel-title">Cursos Mais Recentes</h2>
     {% if recent_courses %}
@@ -44,7 +46,7 @@
                     <h3 class="card-title">{{ course.name }}</h3>
                     <p class="card-price">R$ {{ course.price }}</p>
                     <a href="{% url 'add_to_cart' course.id %}" class="btn btn-primary btn-icon">
-                        🛒 Adicionar ao Carrinho
+                        Adicionar ao carrinho
                     </a>
                 </div>
             </div>

@@ -5,12 +5,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Plataforma de Cursos{% endblock %}</title>
+    <title>{% block title %}Indes Portal{% endblock %}</title>
+    <meta name="description" content="Indes Portal — ambiente de aprendizagem do INDES. Aulas, classes e acompanhamento.">
     {% load static %}
-    <link rel="stylesheet" href="{% static 'core/css/main.css' %}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{% static 'core/img/favicon-192x192.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'core/img/favicon-192x192.png' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lato:wght@400;500;700&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'core/css/main.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 
@@ -18,54 +21,51 @@
     {% if user.is_authenticated %}
     <div class="app-container">
         <!-- Hamburger Menu (Mobile) -->
-        <button class="hamburger" aria-label="Toggle menu">☰</button>
+        <button class="hamburger" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false">☰</button>
 
         <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-logo">
-                <a href="{% url 'home' %}">COURSE NAME</a>
-            </div>
+        <aside class="sidebar" id="sidebar">
+            <a class="sidebar-logo" href="{% url 'home' %}" aria-label="Indes Portal — início">
+                <img src="{% static 'core/img/indes-logo-light.png' %}" alt="INDES" width="479" height="130">
+                <span class="sidebar-logo-suffix">Portal</span>
+            </a>
 
-            <nav>
+            <nav aria-label="Navegação principal">
+                {% with url_name=request.resolver_match.url_name %}
                 <ul class="sidebar-nav">
                     <li>
+                        <a href="{% url 'home' %}" class="{% if url_name == 'home' or url_name == 'home_alt' %}active{% endif %}">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 10.5 12 3.2l9 7.3"/><path d="M5.5 9.6V21h13V9.6"/></svg> Início
+                        </a>
+                    </li>
+                    <li>
                         <a href="{% url 'my_courses' %}"
-                            class="{% if request.path == '/courses/my-courses/' %}active{% endif %}">
-                            📚 Meus Cursos
+                            class="{% if url_name == 'my_courses' or url_name == 'course_detail' or url_name == 'course_redirect' or url_name == 'lesson_view' or url_name == 'quiz_view' or url_name == 'quiz_take' or url_name == 'quiz_result' %}active{% endif %}">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 5.6A1.6 1.6 0 0 1 5.6 4H12v16H5.6A1.6 1.6 0 0 1 4 18.4z"/><path d="M12 4h6.4A1.6 1.6 0 0 1 20 5.6v12.8a1.6 1.6 0 0 1-1.6 1.6H12"/></svg> Minhas aulas
                         </a>
                     </li>
                     <li>
                         <a href="{% url 'turma_list' %}"
-                            class="{% if '/courses/turmas' in request.path %}active{% endif %}">
-                            🏫 Turmas
+                            class="{% if url_name == 'turma_list' or url_name == 'turma_detail' or url_name == 'presence_session_detail' or url_name == 'presence_session_create' %}active{% endif %}">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3.2"/><path d="M3.6 20c0-3.1 2.4-5.1 5.4-5.1s5.4 2 5.4 5.1"/><path d="M16.2 5.3a3 3 0 0 1 0 5.5"/><path d="M17.6 14.7c1.9.6 3.1 2.3 3.1 4.3"/></svg> Classes
                         </a>
                     </li>
-                    <!-- <li>
-                        <a href="{% url 'acquire_courses' %}"
-                            class="{% if request.path == '/courses/acquire/' %}active{% endif %}">
-                            🛒 Adquirir Cursos
-                        </a>
-                    </li> -->
+                    <!-- Loja desativada nesta versão: rotas seguem vivas, mas fora do menu. -->
                     <li>
-                        <a href="{% url 'account' %}" class="{% if request.path == '/account/' %}active{% endif %}">
-                            👤 Minha Conta
+                        <a href="{% url 'account' %}" class="{% if url_name == 'account' or url_name == 'change_email_request' or url_name == 'change_email_confirm' %}active{% endif %}">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.8 20.4c0-3.5 3.3-5.7 7.2-5.7s7.2 2.2 7.2 5.7"/></svg> Minha conta
                         </a>
                     </li>
-                    <!-- <li>
-                        <a href="{% url 'cart' %}" class="{% if request.path == '/cart/' %}active{% endif %}">
-                            🛍️ Carrinho
-                            {% if cart_item_count > 0 %}
-                            <span class="cart-badge">{{ cart_item_count }}</span>
-                            {% endif %}
-                        </a>
-                    </li> -->
                 </ul>
+                {% endwith %}
             </nav>
 
-            <form method="post" action="{% url 'logout' %}">
-                {% csrf_token %}
-                <button type="submit" class="logout-btn">Sair</button>
-            </form>
+            <div class="sidebar-footer">
+                <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-btn">Sair</button>
+                </form>
+            </div>
         </aside>
 
         <!-- Main Content -->
@@ -82,6 +82,11 @@
             {% endif %}
 
             {% block content %}{% endblock %}
+
+            <footer class="app-footer">
+                <span><strong>Indes Portal</strong> — ambiente de aprendizagem INDES</span>
+                <span>{% now "Y" %} · <a href="https://indes.org.br/" target="_blank" rel="noopener">indes.org.br</a></span>
+            </footer>
         </main>
     </div>
     {% else %}

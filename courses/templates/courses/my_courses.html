@@ -1,15 +1,18 @@
 {% extends 'core/base.html' %}
 
-{% block title %}Meus Cursos - Plataforma de Cursos{% endblock %}
+{% block title %}Indes Portal — Minhas aulas{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Meus Cursos</h1>
+<h1 class="page-title">Minhas aulas</h1>
+<p style="color: var(--text-gray); margin-top: calc(-1 * var(--spacing-sm)); margin-bottom: var(--spacing-lg);">
+    Cursos em que você está matriculado. Abra um curso para ver os módulos e as aulas.
+</p>
 
 <!-- Search -->
 <div class="form-search">
     <form method="get">
         <span class="form-search-icon">🔍</span>
-        <input type="text" name="search" class="form-input" placeholder="Buscar cursos..." value="{{ search_query }}">
+        <input type="text" name="search" class="form-input" placeholder="Buscar aulas..." value="{{ search_query }}">
     </form>
 </div>
 
@@ -30,18 +33,20 @@
     </a>
     {% endfor %}
 </div>
-<!-- {% else %}
+{% else %}
 <div class="card">
     <div class="card-body text-center">
-        <p style="color: var(--text-gray); margin-bottom: var(--spacing-md);">
+        <p style="color: var(--text-gray); margin-bottom: var(--spacing-sm);">
             {% if search_query %}
-            Nenhum curso encontrado para "{{ search_query }}".
+            Nenhuma aula encontrada para "{{ search_query }}".
             {% else %}
-            Você ainda não possui cursos.
+            Você ainda não está matriculado em nenhuma aula.
             {% endif %}
         </p>
-        <a href="{% url 'acquire_courses' %}" class="btn btn-primary">Adquirir Cursos</a>
+        <p style="color: var(--text-gray); font-size: 0.9rem;">
+            Em caso de dúvida, fale com a equipe do INDES.
+        </p>
     </div>
 </div>
-{% endif %} -->
+{% endif %}
 {% endblock %}

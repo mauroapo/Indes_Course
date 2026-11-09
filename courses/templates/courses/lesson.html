@@ -1,6 +1,6 @@
 {% extends 'core/base.html' %}
 
-{% block title %}{{ lesson.title }} - {{ course.name }}{% endblock %}
+{% block title %}Indes Portal — {{ lesson.title }}{% endblock %}
 
 {% block content %}
 <!-- Breadcrumb -->
@@ -206,10 +206,11 @@
     .completion-badge {
         display: inline-block;
         padding: 0.75rem 1.5rem;
-        background: linear-gradient(135deg, var(--primary-purple), var(--primary-orange));
+        background: var(--primary-purple);
         color: white;
-        border-radius: var(--radius-md);
-        font-weight: 600;
+        border-radius: var(--radius-pill);
+        font-family: var(--font-cta);
+        font-weight: 700;
     }
 
     .lesson-navigation {

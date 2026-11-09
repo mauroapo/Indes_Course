@@ -1,6 +1,6 @@
 {% extends 'core/base.html' %}
 
-{% block title %}{{ course.name }} - Plataforma de Cursos{% endblock %}
+{% block title %}Indes Portal — {{ course.name }}{% endblock %}
 
 {% block content %}
 <div class="course-header">
@@ -105,7 +105,7 @@
 
     .progress-bar-fill {
         height: 100%;
-        background: linear-gradient(135deg, var(--primary-purple), var(--primary-orange));
+        background: var(--primary-purple);
         transition: width 0.3s ease;
     }
 
@@ -125,7 +125,7 @@
 
     .module-number {
         display: inline-block;
-        background: linear-gradient(135deg, var(--primary-blue), var(--primary-orange));
+        background: var(--primary-purple);
         color: white;
         padding: 0.25rem 0.75rem;
         border-radius: var(--radius-md);
@@ -169,7 +169,7 @@
     }
 
     .content-item.completed {
-        background: linear-gradient(135deg, rgba(107, 70, 193, 0.05), rgba(249, 115, 22, 0.05));
+        background: rgba(49, 0, 81, 0.05);
         border-color: var(--primary-purple);
     }
 
@@ -186,7 +186,7 @@
     }
 
     .content-item.completed .content-item-icon {
-        background: linear-gradient(135deg, var(--primary-purple), var(--primary-orange));
+        background: var(--primary-purple);
         color: white;
     }
 
