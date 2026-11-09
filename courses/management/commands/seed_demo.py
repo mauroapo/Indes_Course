@@ -21,6 +21,7 @@ Nothing is deleted and existing rows are never overwritten.
 from datetime import date
 from decimal import Decimal
 
+from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
@@ -387,6 +388,9 @@ class Command(BaseCommand):
         Enrollment.objects.get_or_create(
             user=admin, course=courses[0], defaults={'source': 'individual'}
         )
+
+        # Grupos de módulo (Professor / Aluno) + permissões de acesso
+        call_command('seed_roles')
 
         self._report(stats, password, admin)
 

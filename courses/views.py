@@ -1,19 +1,25 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.db.models import Q, Prefetch
 from django.core.signing import Signer
 from django.conf import settings
 from django.contrib import messages
 from django.utils import timezone
 from django.http import JsonResponse
+
+from core.permissions import MODULE_PERMISSIONS, module_required
+
 from .models import (
     Course, Enrollment, Module, Lesson, Quiz, Question,
     QuestionOption, QuizQuestion, StudentProgress, QuizAttempt, StudentAnswer,
     Turma, PresenceSession, PresenceRecord
 )
+from .permissions import ALUNO, PROFESSOR, require_presence_role
 
 
 @login_required
+@module_required(MODULE_PERMISSIONS['cursos'])
 def my_courses_view(request):
     """Display user's enrolled courses."""
     search_query = request.GET.get('search', '')
@@ -33,6 +39,7 @@ def my_courses_view(request):
 
 
 @login_required
+@module_required(MODULE_PERMISSIONS['cursos'])
 def acquire_courses_view(request):
     """Display available courses for purchase."""
     search_query = request.GET.get('search', '')
@@ -66,6 +73,7 @@ def acquire_courses_view(request):
 
 
 @login_required
+@module_required(MODULE_PERMISSIONS['cursos'])
 def course_redirect_view(request, course_id):
     """Redirect to internal course player."""
     course = get_object_or_404(Course, id=course_id)
@@ -85,6 +93,7 @@ def course_redirect_view(request, course_id):
 # ============================================================================
 
 @login_required
+@module_required(MODULE_PERMISSIONS['cursos'])
 def course_detail_view(request, course_id):
     """Display course structure with modules and progress."""
     course = get_object_or_404(Course, id=course_id)
@@ -134,6 +143,7 @@ def course_detail_view(request, course_id):
 
 
 @login_required
+@module_required(MODULE_PERMISSIONS['cursos'])
 def lesson_view(request, lesson_id):
     """Display lesson content."""
     lesson = get_object_or_404(Lesson, id=lesson_id, is_published=True)
@@ -178,6 +188,7 @@ def lesson_view(request, lesson_id):
 
 
 @login_required
+@module_required(MODULE_PERMISSIONS['cursos'])
 def quiz_view(request, quiz_id):
     """Display quiz and handle attempts."""
     quiz = get_object_or_404(Quiz, id=quiz_id, is_published=True)
@@ -220,6 +231,7 @@ def quiz_view(request, quiz_id):
 
 
 @login_required
+@module_required(MODULE_PERMISSIONS['cursos'])
 def quiz_take_view(request, quiz_id):
     """Take a quiz attempt."""
     quiz = get_object_or_404(Quiz, id=quiz_id, is_published=True)
@@ -344,6 +356,7 @@ def quiz_take_view(request, quiz_id):
 
 
 @login_required
+@module_required(MODULE_PERMISSIONS['cursos'])
 def quiz_result_view(request, attempt_id):
     """Display quiz results."""
     attempt = get_object_or_404(QuizAttempt, id=attempt_id, user=request.user)
@@ -369,10 +382,15 @@ def quiz_result_view(request, attempt_id):
 # ============================================================================
 
 @login_required
+@module_required(MODULE_PERMISSIONS['presenca'])
 def turma_list_view(request):
-    """Show turmas for the current user: as professor or as student."""
-    teaching = Turma.objects.filter(professor=request.user, is_active=True)
-    enrolled = Turma.objects.filter(students=request.user, is_active=True)
+    """Turmas the user teaches (staff: all) or is enrolled in as an aluno."""
+    if request.user.is_superuser or request.user.is_staff:
+        teaching = Turma.objects.filter(is_active=True)
+        enrolled = Turma.objects.none()
+    else:
+        teaching = Turma.objects.filter(professor=request.user, is_active=True)
+        enrolled = Turma.objects.filter(students=request.user, is_active=True)
     return render(request, 'courses/turma_list.html', {
         'teaching': teaching,
         'enrolled': enrolled,
@@ -380,35 +398,40 @@ def turma_list_view(request):
 
 
 @login_required
+@module_required(MODULE_PERMISSIONS['presenca'])
 def turma_detail_view(request, turma_id):
-    """Show turma detail — roster + presence sessions. View depends on whether user is professor or student."""
+    """Turma detail — roster for professors, own check-ins for alunos.
+
+    Non-members get a 403: the roster (names + e-mails) must not leak.
+    """
     turma = get_object_or_404(Turma, id=turma_id, is_active=True)
+    role = require_presence_role(request.user, turma, PROFESSOR, ALUNO)
 
-    is_professor = turma.professor == request.user
-    is_student = turma.students.filter(id=request.user.id).exists()
+    is_professor = role == PROFESSOR
+    is_student = role == ALUNO
 
-    if not is_professor and not is_student:
-        messages.error(request, 'Você não tem acesso a esta turma.')
-        return redirect('turma_list')
-
-    students = turma.students.all()
     sessions = turma.presence_sessions.order_by('-date', '-created_at')
 
-    # Presence counts per session for the summary table
-    sessions_data = []
-    for s in sessions:
-        count = s.records.count()
-        sessions_data.append({'session': s, 'count': count})
+    # The roster is professor-only; alunos never receive it in context.
+    students = turma.students.all() if is_professor else []
+    sessions_data = [
+        {
+            'session': session,
+            'count': session.records.count() if is_professor else None,
+        }
+        for session in sessions
+    ]
 
-    # For students: check which sessions are open and if they already checked in
+    # For students: open sessions they can still check in to
     open_sessions = []
     if is_student:
-        for s in sessions.filter(is_open=True):
-            already_checked = s.records.filter(student=request.user).exists()
-            open_sessions.append({'session': s, 'already_checked': already_checked})
+        for session in sessions.filter(is_open=True):
+            already_checked = session.records.filter(student=request.user).exists()
+            open_sessions.append({'session': session, 'already_checked': already_checked})
 
     return render(request, 'courses/turma_detail.html', {
         'turma': turma,
+        'presence_role': role,
         'is_professor': is_professor,
         'is_student': is_student,
         'students': students,
@@ -418,9 +441,11 @@ def turma_detail_view(request, turma_id):
 
 
 @login_required
+@module_required(MODULE_PERMISSIONS['presenca'])
 def presence_session_create_view(request, turma_id):
-    """Professor creates a new presence session."""
-    turma = get_object_or_404(Turma, id=turma_id, is_active=True, professor=request.user)
+    """Professor creates a new presence session (scoped to their own turma)."""
+    turma = get_object_or_404(Turma, id=turma_id, is_active=True)
+    require_presence_role(request.user, turma, PROFESSOR)
 
     if request.method == 'POST':
         date_str = request.POST.get('date')
@@ -445,36 +470,50 @@ def presence_session_create_view(request, turma_id):
 
 
 @login_required
+@module_required(MODULE_PERMISSIONS['presenca'])
 def presence_session_detail_view(request, session_id):
-    """Professor views session — who attended, who didn't. Includes toggle."""
+    """Session panel — full roster for professors, own status for alunos.
+
+    Members of the turma only; anybody else gets a 403.
+    """
     session = get_object_or_404(PresenceSession, id=session_id)
     turma = session.turma
+    role = require_presence_role(request.user, turma, PROFESSOR, ALUNO)
 
-    if turma.professor != request.user:
-        messages.error(request, 'Apenas o professor pode ver este painel.')
-        return redirect('turma_list')
-
-    all_students = turma.students.all()
-    present_ids = session.records.values_list('student_id', flat=True)
-    present_students = all_students.filter(id__in=present_ids)
-    absent_students = all_students.exclude(id__in=present_ids)
+    if role == PROFESSOR:
+        all_students = turma.students.all()
+        present_ids = session.records.values_list('student_id', flat=True)
+        present_students = all_students.filter(id__in=present_ids)
+        absent_students = all_students.exclude(id__in=present_ids)
+        student_count = all_students.count()
+        my_record = None
+    else:
+        # Aluno: never expose the roster, only their own attendance.
+        present_students = []
+        absent_students = []
+        student_count = None
+        my_record = session.records.filter(student=request.user).first()
 
     return render(request, 'courses/presence_session_detail.html', {
         'session': session,
         'turma': turma,
+        'presence_role': role,
+        'is_professor': role == PROFESSOR,
+        'is_student': role == ALUNO,
         'present_students': present_students,
         'absent_students': absent_students,
+        'student_count': student_count,
+        'my_record': my_record,
+        'can_checkin': role == ALUNO and session.is_open and my_record is None,
     })
 
 
 @login_required
+@module_required(MODULE_PERMISSIONS['presenca'])
 def presence_session_toggle_view(request, session_id):
-    """Professor toggles is_open on a session via POST."""
+    """Professor opens/closes a session (Professor-only surface)."""
     session = get_object_or_404(PresenceSession, id=session_id)
-
-    if session.turma.professor != request.user:
-        messages.error(request, 'Permissão negada.')
-        return redirect('turma_list')
+    require_presence_role(request.user, session.turma, PROFESSOR)
 
     if request.method == 'POST':
         session.is_open = not session.is_open
@@ -486,14 +525,17 @@ def presence_session_toggle_view(request, session_id):
 
 
 @login_required
+@module_required(MODULE_PERMISSIONS['presenca'])
 def presence_checkin_view(request, session_id):
-    """Student registers presence in an open session."""
-    session = get_object_or_404(PresenceSession, id=session_id, is_open=True)
+    """Aluno registers their own presence in an open session."""
+    session = get_object_or_404(PresenceSession, id=session_id)
     turma = session.turma
 
-    if not turma.students.filter(id=request.user.id).exists():
-        messages.error(request, 'Você não pertence a esta turma.')
-        return redirect('turma_list')
+    # Professors do not check in as students; non-members are rejected too.
+    require_presence_role(request.user, turma, ALUNO)
+
+    if not session.is_open:
+        raise PermissionDenied('A chamada não está aberta.')
 
     if request.method == 'POST':
         _, created = PresenceRecord.objects.get_or_create(session=session, student=request.user)
@@ -506,13 +548,11 @@ def presence_checkin_view(request, session_id):
 
 
 @login_required
+@module_required(MODULE_PERMISSIONS['presenca'])
 def presence_remove_view(request, session_id, student_id):
     """Professor removes a student's presence from a session."""
     session = get_object_or_404(PresenceSession, id=session_id)
-    
-    if session.turma.professor != request.user:
-        messages.error(request, 'Permissão negada.')
-        return redirect('turma_list')
+    require_presence_role(request.user, session.turma, PROFESSOR)
 
     if request.method == 'POST':
         record = PresenceRecord.objects.filter(session=session, student_id=student_id).first()
