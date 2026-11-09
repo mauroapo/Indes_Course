@@ -26,8 +26,9 @@ Nothing is deleted and existing rows are never overwritten.
 from datetime import date
 from decimal import Decimal
 
+from django.conf import settings
 from django.core.management import call_command
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from accounts.models import CustomUser
@@ -286,9 +287,27 @@ class Command(BaseCommand):
             default=DEMO_PASSWORD,
             help='Senha aplicada apenas a usuários recém-criados.',
         )
+        parser.add_argument(
+            '--force',
+            action='store_true',
+            help=(
+                'Executa mesmo sem SEED_ALLOWED. Obrigatório em ambientes que '
+                'não são de desenvolvimento, pois o comando reseta a senha de '
+                'todas as contas.'
+            ),
+        )
 
     @transaction.atomic
     def handle(self, *args, **options):
+        if not (settings.SEED_ALLOWED or options['force']):
+            raise CommandError(
+                'seed_demo está bloqueado: SEED_ALLOWED não está habilitado.\n'
+                'Este comando cria contas de demonstração e redefine a senha de '
+                'TODAS as contas para a senha padrão. Em desenvolvimento, '
+                'defina SEED_ALLOWED=True no .env; caso contrário, use --force '
+                'conscientemente.'
+            )
+
         password = options['password']
         stats = {
             'users': 0, 'orgs': 0, 'courses': 0, 'modules': 0,

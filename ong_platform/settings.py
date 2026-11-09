@@ -15,6 +15,10 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-dev-key-change-in-pro
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
+# Permite rodar comandos destrutivos de seed (``seed_demo`` reseta a senha de
+# TODAS as contas). Fica desligado por padrão; só o ambiente de dev habilita.
+SEED_ALLOWED = config('SEED_ALLOWED', default=False, cast=bool)
+
 #ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
 
