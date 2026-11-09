@@ -19,6 +19,9 @@ class Course(models.Model):
         verbose_name = 'Course'
         verbose_name_plural = 'Courses'
         ordering = ['-created_at']
+        permissions = [
+            ('access_courses', 'Pode acessar o módulo Cursos'),
+        ]
 
 
 class Enrollment(models.Model):
@@ -445,6 +448,11 @@ class Turma(models.Model):
         verbose_name = 'Turma'
         verbose_name_plural = 'Turmas'
         ordering = ['-created_at']
+        permissions = [
+            ('access_presence', 'Pode acessar o módulo Presença'),
+            ('manage_presence', 'Professor: gerenciar chamada e presenças'),
+            ('checkin_presence', 'Aluno: registrar a própria presença'),
+        ]
 
 
 class PresenceSession(models.Model):
