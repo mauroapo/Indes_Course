@@ -1,0 +1,87 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+
+{% comment %}
+    Brand the Django admin as Indes Portal.
+    This file lives in BASE_DIR/templates, which has priority over the
+    templates shipped with django.contrib.admin — no admin app files are
+    modified.
+{% endcomment %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | Indes Portal{% endblock %}
+
+{% block branding %}
+<div id="site-name">
+    <a href="{% url 'admin:index' %}">Indes Portal <span class="indes-admin-suffix">— Administração</span></a>
+</div>
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    :root,
+    html[data-theme="light"] {
+        --primary: #310051;
+        --secondary: #24003C;
+        --accent: #4CC9F0;
+        --primary-fg: #FFFFFF;
+
+        --header-bg: #310051;
+        --header-color: #FFFFFF;
+        --header-branding-color: #FFFFFF;
+        --header-link-color: #FFFFFF;
+
+        --breadcrumbs-bg: #24003C;
+        --breadcrumbs-fg: #E7DCF2;
+        --breadcrumbs-link-fg: #FFFFFF;
+
+        --link-fg: #310051;
+        --link-hover-color: #672B8D;
+        --link-selected-fg: #461963;
+
+        --button-bg: #310051;
+        --button-fg: #FFFFFF;
+        --button-hover-bg: #461963;
+        --default-button-bg: #310051;
+        --default-button-hover-bg: #461963;
+        --close-button-bg: #34365A;
+        --close-button-hover-bg: #2E227A;
+
+        --object-tools-bg: #672B8D;
+        --object-tools-hover-bg: #461963;
+
+        --hairline-color: #E8E1F0;
+        --selected-row: #F5F2F8;
+    }
+
+    #site-name a,
+    #site-name a:link,
+    #site-name a:visited {
+        color: #FFFFFF;
+        font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+    }
+
+    .indes-admin-suffix {
+        font-weight: 400;
+        opacity: 0.75;
+        font-size: 0.85em;
+    }
+
+    .module h2,
+    .module caption,
+    .inline-group h2 {
+        background: #310051;
+    }
+
+    div.breadcrumbs {
+        background: #24003C;
+        color: #E7DCF2;
+    }
+
+    div.breadcrumbs a {
+        color: #FFFFFF;
+    }
+</style>
+{% endblock %}
