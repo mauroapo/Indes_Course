@@ -22,6 +22,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from accounts.models import CustomUser
+from courses.management.commands.seed_demo import STUDENTS, TEACHERS
 
 
 ROLES = {
@@ -38,9 +39,10 @@ ROLES = {
     ],
 }
 
+# Fonte única do elenco: o mesmo roster usado por ``seed_demo``.
 DEMO_MEMBERS = {
-    'Professor': ['professor@indes.dev'],
-    'Aluno': ['aluno@indes.dev', 'beatriz@indes.dev', 'carlos@indes.dev'],
+    'Professor': [teacher['email'] for teacher in TEACHERS],
+    'Aluno': [student['email'] for student in STUDENTS],
 }
 
 

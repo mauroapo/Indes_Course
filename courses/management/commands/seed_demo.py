@@ -8,12 +8,17 @@ Usage::
 Creates (only what is missing, so it is safe to run repeatedly):
 
 * 1 superuser            — admin@indes.dev
-* 1 professor + 3 alunos — senha comum de demonstração
+* 3 professores          — um por turma (ver TEACHING_PLAN)
+* 8 alunos               — distribuídos nas 6 turmas
 * 2 organizações         — ONGs parceiras
 * 3 cursos               — com módulos, aulas (uma com vídeo do YouTube)
-* 2 turmas por curso     — com professor e alunos
-* matrículas             — o aluno demo vê "Minhas turmas"
+* 2 turmas por curso     — cada uma com um professor responsável
+* matrículas             — criadas a partir das turmas
 * 1 chamada aberta       — para testar o fluxo de presença
+
+Every seeded account gets the dev password (``--password``, default
+``indes123``); the password is reset on every run so the roster in
+``USERS.md`` always matches the database.
 
 Nothing is deleted and existing rows are never overwritten.
 """
@@ -32,20 +37,35 @@ from courses.models import (
 from orgs.models import Organization, OrgMember
 
 ADMIN_EMAIL = 'admin@indes.dev'
-ADMIN_PASSWORD = 'indesdev2026'
+ADMIN_PASSWORD = 'indes123'
 
-DEMO_PASSWORD = 'indesdev2026'
+# Dev-only credential shared by every seeded account (keep in sync with USERS.md).
+DEMO_PASSWORD = 'indes123'
 
-PROFESSOR = {
-    'email': 'professor@indes.dev',
-    'first_name': 'Marina',
-    'last_name': 'Albuquerque',
-}
+# Professores: cada curso tem duas turmas, com um professor responsável por turma.
+TEACHERS = [
+    {'email': 'marina@indes.dev', 'first_name': 'Marina', 'last_name': 'Albuquerque'},
+    {'email': 'joao@indes.dev', 'first_name': 'João', 'last_name': 'Pereira'},
+    {'email': 'cleo@indes.dev', 'first_name': 'Cléo', 'last_name': 'Nascimento'},
+]
 
 STUDENTS = [
     {'email': 'aluno@indes.dev', 'first_name': 'Ana', 'last_name': 'Souza'},
     {'email': 'beatriz@indes.dev', 'first_name': 'Beatriz', 'last_name': 'Lima'},
     {'email': 'carlos@indes.dev', 'first_name': 'Carlos', 'last_name': 'Ferreira'},
+    {'email': 'diego@indes.dev', 'first_name': 'Diego', 'last_name': 'Moreira'},
+    {'email': 'elisa@indes.dev', 'first_name': 'Elisa', 'last_name': 'Nunes'},
+    {'email': 'felipe@indes.dev', 'first_name': 'Felipe', 'last_name': 'Barros'},
+    {'email': 'gabriela@indes.dev', 'first_name': 'Gabriela', 'last_name': 'Ramos'},
+    {'email': 'hugo@indes.dev', 'first_name': 'Hugo', 'last_name': 'Teixeira'},
+]
+
+# índice do professor responsável de cada turma, por curso:
+# (curso 0: Manhã, Noite), (curso 1: ...), (curso 2: ...)
+TEACHING_PLAN = [
+    (0, 2),
+    (1, 0),
+    (2, 1),
 ]
 
 ORGANIZATIONS = [
@@ -279,10 +299,10 @@ class Command(BaseCommand):
             ADMIN_EMAIL, password, 'Administrador', 'Indes',
             is_staff=True, is_superuser=True, stats=stats,
         )
-        professor = self._user(
-            PROFESSOR['email'], password,
-            PROFESSOR['first_name'], PROFESSOR['last_name'], stats=stats,
-        )
+        teachers = [
+            self._user(t['email'], password, t['first_name'], t['last_name'], stats=stats)
+            for t in TEACHERS
+        ]
         students = [
             self._user(s['email'], password, s['first_name'], s['last_name'], stats=stats)
             for s in STUDENTS
@@ -293,10 +313,11 @@ class Command(BaseCommand):
             if created:
                 stats['orgs'] += 1
             OrgMember.objects.get_or_create(
-                organization=org, user=professor, defaults={'role': 'admin'}
+                organization=org, user=teachers[0], defaults={'role': 'admin'}
             )
 
         courses = []
+        enrolled = {}
         for position, data in enumerate(COURSES):
             course, created = Course.objects.get_or_create(
                 name=data['name'],
@@ -344,45 +365,51 @@ class Command(BaseCommand):
                     if lesson_created:
                         stats['lessons'] += 1
 
-            # Duas turmas por curso: manhã e noite
-            morning_turma = None
-            for suffix in TURMA_SUFFIXES:
+            # Duas turmas por curso (Manhã/Noite), cada uma com seu professor
+            for suffix_index, suffix in enumerate(TURMA_SUFFIXES):
+                professor = teachers[TEACHING_PLAN[position][suffix_index]]
                 turma, turma_created = Turma.objects.get_or_create(
                     name=f'{course.name} — Turma {suffix}',
                     defaults={'professor': professor, 'is_active': True},
                 )
                 if turma_created:
                     stats['turmas'] += 1
-                if turma.professor_id is None:
+                if turma.professor_id != professor.id:
                     turma.professor = professor
                     turma.save(update_fields=['professor'])
-                turma.students.add(*students)
-                if suffix == TURMA_SUFFIXES[0]:
-                    morning_turma = turma
 
-            # Chamada aberta na turma da manhã do primeiro curso
-            if position == 0 and morning_turma is not None:
-                _, session_created = PresenceSession.objects.get_or_create(
-                    turma=morning_turma,
-                    date=date.today(),
-                    defaults={'is_open': True},
-                )
-                if session_created:
-                    stats['sessions'] += 1
+                # Elenco de 4 alunos por turma, em rodízio entre os 8 alunos.
+                # ``set`` (não ``add``) mantém a turma determinística a cada execução.
+                start = (position * len(TURMA_SUFFIXES) + suffix_index) * 2
+                roster = [
+                    students[(start + offset) % len(students)]
+                    for offset in range(4)
+                ]
+                turma.students.set(roster)
+                for student in roster:
+                    enrolled.setdefault(student.id, set()).add(course.id)
+                    _, created = Enrollment.objects.get_or_create(
+                        user=student, course=course, defaults={'source': 'individual'}
+                    )
+                    if created:
+                        stats['enrollments'] += 1
 
-        # Matrículas: o aluno demo enxerga 2 cursos em "Meus cursos"
-        enrollment_plan = [
-            (students[0], courses[0]),
-            (students[0], courses[1]),
-            (students[1], courses[0]),
-            (students[2], courses[2]),
-        ]
-        for user, course in enrollment_plan:
-            _, created = Enrollment.objects.get_or_create(
-                user=user, course=course, defaults={'source': 'individual'}
-            )
-            if created:
-                stats['enrollments'] += 1
+                # Uma chamada aberta por turma da manhã
+                if suffix_index == 0:
+                    _, session_created = PresenceSession.objects.get_or_create(
+                        turma=turma,
+                        date=date.today(),
+                        defaults={'is_open': True},
+                    )
+                    if session_created:
+                        stats['sessions'] += 1
+
+        # Matrículas obsoletas de alunos demo (cursos em que já não estão em turma)
+        for student in students:
+            allowed = enrolled.get(student.id, set())
+            Enrollment.objects.filter(user=student).exclude(
+                course_id__in=allowed
+            ).delete()
 
         # Garante que o admin também tenha acesso de leitura a um curso
         Enrollment.objects.get_or_create(
@@ -392,7 +419,16 @@ class Command(BaseCommand):
         # Grupos de módulo (Professor / Aluno) + permissões de acesso
         call_command('seed_roles')
 
-        self._report(stats, password, admin)
+        # Uniformiza a senha de TODAS as contas locais, para o roster de USERS.md
+        # nunca divergir do banco (build de desenvolvimento apenas).
+        reset = 0
+        for user in CustomUser.objects.all():
+            user.set_password(password)
+            user.save(update_fields=['password'])
+            reset += 1
+        stats['passwords'] = reset
+
+        self._report(stats, password, admin, teachers, students)
 
     # ------------------------------------------------------------------
     def _user(self, email, password, first_name, last_name, stats,
@@ -422,11 +458,12 @@ class Command(BaseCommand):
                 user.save()
         return user
 
-    def _report(self, stats, password, admin):
+    def _report(self, stats, password, admin, teachers, students):
         write = self.stdout.write
         write(self.style.SUCCESS('\nIndes Portal — dados de demonstração'))
-        write('-' * 52)
+        write('-' * 64)
         write(f"Usuários criados .......... {stats['users']}")
+        write(f"Senhas redefinidas ........ {stats.get('passwords', 0)}")
         write(f"Organizações criadas ...... {stats['orgs']}")
         write(f"Cursos criados ............ {stats['courses']}")
         write(f"Módulos criados ........... {stats['modules']}")
@@ -434,13 +471,22 @@ class Command(BaseCommand):
         write(f"Turmas criadas ............ {stats['turmas']}")
         write(f"Matrículas criadas ........ {stats['enrollments']}")
         write(f"Chamadas abertas .......... {stats['sessions']}")
-        write('-' * 52)
+        write('-' * 64)
         write('Contas de acesso (senha: %s)' % password)
-        write(f'  admin (superuser)  {admin.email}')
-        write(f'  professor          {PROFESSOR["email"]}')
-        for s in STUDENTS:
-            write(f'  aluno              {s["email"]}')
-        write('-' * 52)
+        write(f'  admin  (superuser)  {admin.email}')
+        for index, teacher in enumerate(teachers, start=1):
+            turmas = ', '.join(
+                Turma.objects.filter(professor=teacher).values_list('name', flat=True)
+            )
+            write(f'  prof {index}  (Professor)  {teacher.email}')
+            write(f'        turmas: {turmas or "-"}')
+        for index, student in enumerate(students, start=1):
+            turmas = ', '.join(
+                Turma.objects.filter(students=student).values_list('name', flat=True)
+            )
+            write(f'  aluno {index} (Aluno)      {student.email}')
+            write(f'        turmas: {turmas or "-"}')
+        write('-' * 64)
         write(
             'Totais no banco: %d cursos, %d aulas, %d turmas, %d matrículas'
             % (
